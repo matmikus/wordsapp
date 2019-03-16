@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>WordsApp</title>
+  <script src="https://unpkg.com/react@16.0.0/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@16.0.0/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+  <script src="https://code.getmdl.io/1.3.0/material.min.js" defer></script>
+  <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+  <script src="https://unpkg.com/interactjs@1.3.4/dist/interact.min.js"></script>
+  <script src="data.js"></script>
+  <script src="service-worker.js"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icon.png">
+  <style>
+    body, html, #root {
+      height: 100%;
+    }
+    
+    div {
+      -webkit-user-select: none; /* Safari 3.1+ */
+      -moz-user-select: none; /* Firefox 2+ */
+      -ms-user-select: none; /* IE 10+ */
+      user-select: none; /* Standard syntax */
+    }
+    
+    .mdl-layout__header-row {
+      padding: 16px 8px 16px 16px !important;
+    }
+    
+    .mdl-navigation__link {
+      padding: 12px !important;
+    }
+    
+    .mdl-mini-footer {
+      padding: 16px !important;
+    }
+    
+    .mdl-list__item-avatar {
+      font-size: 30px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      background-color: rgb(63, 81, 181) !important;
+    }
+    
+    .mdl-list__item {
+      padding: 8px !important;
+      height: unset !important;
+      background: #D6EAF8 !important;
+      border-radius: 8px !important;
+      margin: 8px !important;
+    }
+    
+    .mdl-list__item-primary-content {
+      height: unset !important;
+    }
+    
+    .mdl-list__item-secondary-content {
+      display: flex !important;
+      justify-content: center !important;
+      font-size: 130% !important;
+      margin-left: 0 !important;
+    }
+    
+    .mdl-list__item-text-body {
+      height: unset !important;
+    }
+    
+    .mdl-layout__content {
+      display: flex !important;
+      flex-direction: column !important;
+    }
+
+    .mdl-list__item-avatar {
+      margin-right: 5px !important;
+    }
+    
+    * > .mdl-list__item-avatar:last-child {
+      margin-right: 9px !important;
+    }
+    
+    .page-content {
+      flex: 1 !important;
+      overflow-y: hidden;
+    }
+    
+    .action-container {
+      display: flex;
+      flex-direction: column;
+      padding-top: 24px;
+      overflow: hidden;
+    }
+    
+    .word-container {
+      text-align: center;
+      margin: 0 24px;
+      padding: 24px;
+      background-color: cornflowerblue;
+      font-size: 24px;
+      border-radius: 12px;
+    }
+    
+    #decision-container {
+      margin: 24px 0;
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    #decision-container > div {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .dropzone {
+      flex: 1;
+      height: 130px;
+      box-sizing: border-box;
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    .dropzone > i {
+      font-size: 70px !important;
+      opacity: 0.3 !important;
+    }
+    
+    .drop-target > i {
+      font-size: 100px !important;
+      opacity: 1 !important;
+      color: #fff;
+    }
+    
+    .drop-active {
+      opacity: 1;
+      pointer-events: unset;
+    }
+    
+    #decision-left {
+      background-color: red;
+      border-top-right-radius: 24px;
+      border-bottom-right-radius: 24px;
+    }
+    
+    #decision-right {
+      background-color: limegreen;
+      border-top-left-radius: 24px;
+      border-bottom-left-radius: 24px;
+    }
+    
+    #decision-icon-container {
+      margin: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 80px;
+    }
+
+    #decision-icon,
+    #decision-icon * {
+      -ms-touch-action: none;
+      touch-action: none;
+    }
+    
+    .decision-icon-dragging {
+      width: 80px !important;
+      height: 80px !important;
+      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
+    }
+    
+    #decision-icon {
+      border-radius: 50%;
+      background-color: darkorange;
+      font-size: 64px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 74px;
+      height: 74px;
+      color: #fff;
+      user-select: none;
+      z-index: 2;
+      transition: box-shadow 150ms ease-in-out, height 150ms ease-in-out, width 150ms ease-in-out;
+    }
+    
+    .homePageContent {
+      overflow-y: auto;
+      height: 100%;
+    }
+    
+    .mdl-list__item-avatar[disabled] {
+      background-color: darkgray !important;
+    }
+    
+    .pointer {
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+  let wordsData
+  const rootElement = document.getElementById('root')
+  const db = new Dexie('wordsapp_database')
+  
+  db.version(1).stores({
+    sets: 'setId,setName,setSize,words'
+  })
+  
+  if (!window.matchMedia('(display-mode: standalone)').matches) {
+    alert('Aplikacja jest dostosowana do trybu PWA. Dodaj ją do ekranu startowego.')
+  }
+
+  startApp()
+  
+  async function startApp () {
+    wordsData = await getLocalData()
+    
+    if (wordsData != undefined) {
+      loadView()
+    }
+  }
+  
+  async function getLocalData () {
+    let wordsData = JSON.parse(JSON.stringify(wordsDataInitial))
+    
+    await db.sets.each((localSet) => {
+      wordsData.forEach((initialSet, index) => {
+        if (initialSet.setId === localSet.setId) {
+          wordsData[index] = localSet
+        }
+      })
+    })
+    
+    return wordsData
+  }
+  
+  function removeLocalSetData (setId) {
+    const initialSetData = wordsDataInitial.find(el => el.setId === setId)
+    
+    wordsData = wordsData.map((el) => {
+      if (el.setId === setId) return initialSetData
+      else return el
+    })
+    
+    saveLocalData(setId)
+    loadView()
+  }
+  
+  function swapSetLang  (setId) {
+    wordsData = wordsData.map((el) => {
+      if (el.setId === setId) {
+        el.direction = (el.direction === 'EN>PL' ? 'PL>EN' : 'EN>PL')
+      }
+      
+      return el
+    })
+
+    saveLocalData(setId)
+    loadView()
+  }
+  
+  function saveLocalData (setId) {
+    db.sets.put(wordsData.find(el => el.setId === setId))
+  }
+  
+  function makeDecision (success, setId) {
+    const wordItem = wordsData.find(el => el.setId === setId).words.shift()
+    
+    if (!success) {
+      wordsData.find(el => el.setId === setId).words.push(wordItem)
+    }
+    
+    saveLocalData(setId)
+    loadView('wordPage', setId)
+    
+    Array.from(document.getElementsByClassName('dropzone')).forEach((el) => { el.classList.remove('drop-active') })
+    document.getElementById('decision-icon').classList.remove('decision-icon-dragging')
+  }
+  
+  function loadView (pageName, wordsSetId) {
+    if (pageName == undefined || pageName === 'wordPage' && wordsData.find(el => el.setId === wordsSetId).words.length === 0) {
+      pageName = 'homePage'
+    }
+    
+    ReactDOM.render(
+      <div className="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+        <AppHeader pageName={pageName} wordsSetId={wordsSetId}/>
+        {pageName === 'homePage' ? <HomePage/> : <WordPage wordsSetId={wordsSetId}/>}
+      </div>,
+      rootElement
+    )
+  }
+  
+  function HomePage () {
+    return (
+      <div className="homePageContent">
+        <ul className="demo-list-three mdl-list">
+          {
+            wordsData.map((set) => {
+              return (
+                <HomePageItem wordsSetId={set.setId}/>
+              )
+            })
+          }
+        </ul>
+      </div>
+    )
+  }
+  
+  function HomePageItem (props) {
+    const setData = wordsData.find(el => el.setId === props.wordsSetId)
+    const total = setData.setSize
+    const correct = total - setData.words.length
+    const ratio = Math.round(100 * correct / total)
+    const setId = setData.setId
+    const setName = setData.setName
+    const direction = setData.direction
+    
+    return (
+      <li className="mdl-list__item mdl-list__item--three-line">
+        <span className="mdl-list__item-primary-content">
+          <HomePageItemButtons correct={correct} total={total} setId={setId}/>
+          <span>{setName}</span>
+          <span className="mdl-list__item-text-body">
+            {direction} {correct} / {total}
+          </span>
+        </span>
+        <span className="mdl-list__item-secondary-content">
+          <span className="mdl-list__item-secondary-action">{ratio}%</span>
+        </span>
+      </li>
+    )
+  }
+  
+  function HomePageItemButtons (props) {
+    const isInitial = props.correct === 0
+    const isInProgress = props.correct > 0 && props.correct < props.total
+    const isFinished =  props.correct === props.total
+    const setId = props.setId
+    
+    if (isInitial) {
+      return (
+        <span>
+          <i className="material-icons mdl-list__item-avatar pointer" onClick={() => loadView('wordPage', setId)}>play_arrow</i>
+          <i className="material-icons mdl-list__item-avatar pointer" onClick={() => swapSetLang(setId)}>swap_vert</i>
+        </span>
+      )
+    }
+    
+    if (isInProgress) {
+      return (
+        <span>
+          <i className="material-icons mdl-list__item-avatar pointer" onClick={() => loadView('wordPage', setId)}>play_arrow</i>
+          <i className="material-icons mdl-list__item-avatar pointer" onClick={() => removeLocalSetData(setId)}>delete</i>
+          <i className="material-icons mdl-list__item-avatar pointer" onClick={() => swapSetLang(setId)}>swap_vert</i>
+        </span>
+      )
+    }
+    
+    if (isFinished) {
+      return (
+        <span>
+          <i className="material-icons mdl-list__item-avatar" disabled>done</i>
+          <i className="material-icons mdl-list__item-avatar pointer" onClick={() => removeLocalSetData(setId)}>delete</i>
+          <i className="material-icons mdl-list__item-avatar pointer" onClick={() => swapSetLang(setId)}>swap_vert</i>
+        </span>
+      )
+    }
+  }
+  
+  function AppHeader (props) {
+    return (
+      <header className="mdl-layout__header">
+        <div className="mdl-layout__header-row">
+          <span className="mdl-layout-title">
+            {
+              props.pageName === 'wordPage'
+                ?
+                <span>{wordsData.find(el => el.setId === props.wordsSetId).setName}</span>
+                :
+                <span>WordsApp!</span>
+            }
+          </span>
+          <div className="mdl-layout-spacer"></div>
+          <nav className="mdl-navigation">
+            {
+              props.pageName === 'wordPage'
+                ?
+                <div className="mdl-navigation__link">
+                  <i className="material-icons pointer" onClick={() => loadView('homePage')}>home</i>
+                </div>
+                :
+                <div></div>
+            }
+          </nav>
+        </div>
+      </header>
+    )
+  }
+  
+  function WordPage (props) {
+    const setData = wordsData.find(el => el.setId === props.wordsSetId)
+    const fromEnToPl = setData.direction === 'EN>PL'
+    
+    return (
+      <main className="mdl-layout__content">
+        <div className="page-content">
+          <div className="action-container">
+            <div className="word-container">
+              <span className={fromEnToPl ? '' : 'dropzone'}>
+                {setData.words[0].en}
+              </span>
+            </div>
+            <div id="decision-container">
+              <div id="decision-left" className="dropzone" onClick={() => makeDecision(false, setData.setId)}>
+                <i className="material-icons">thumb_down_alt</i>
+              </div>
+              <div>
+                <div id="decision-icon-container">
+                  <div id="decision-icon" className="drag-drop pointer" onTouchStart={() => {onDraggingStart(event)}} onTouchEnd={() => {onDraggingEnd(event, setData.setId)}} onMouseDown={() => {onDraggingStart(event)}} onMouseUp={() => {onDraggingEnd(event, setData.setId)}}>
+                    ?
+                  </div>
+                </div>
+              </div>
+              <div id="decision-right" className="dropzone" onClick={() => makeDecision(true, setData.setId)}>
+                <i className="material-icons">thumb_up_alt</i>
+              </div>
+            </div>
+            <div className="word-container">
+              <span className={fromEnToPl ? 'dropzone' : ''}>{setData.words[0].pl}</span>
+            </div>
+          </div>
+        </div>
+        <WordPageFooter incorrect={setData.words.length} total={setData.setSize}/>
+      </main>
+    )
+  }
+  
+  function WordPageFooter (props) {
+    const total = props.total
+    const correct = total - props.incorrect
+    const ratio = Math.round(100 * correct / props.total)
+    
+    return (
+      <footer className="mdl-mini-footer">
+        <div className="mdl-mini-footer__left-section">
+          {correct} / {total}
+        </div>
+        <div className="mdl-mini-footer__right-section">
+          {ratio}%
+        </div>
+      </footer>
+    )
+  }
+  
+  function dragMoveListener (event) {
+    var target = event.target,
+      x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx,
+      y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy
+    
+    target.style.webkitTransform =
+      target.style.transform =
+        'translate(' + x + 'px, ' + y + 'px)'
+    
+    target.setAttribute('data-x', x)
+    target.setAttribute('data-y', y)
+  }
+  
+  window.dragMoveListener = dragMoveListener
+  
+  interact('.dropzone').dropzone({
+    accept: '#decision-icon',
+    overlap: 0.1,
+    ondragenter: function (event) {
+      var draggableElement = event.relatedTarget,
+        dropzoneElement = event.target
+      
+      dropzoneElement.classList.add('drop-target')
+      draggableElement.classList.add('can-drop')
+    },
+    ondragleave: function (event) {
+      event.target.classList.remove('drop-target')
+      event.relatedTarget.classList.remove('can-drop')
+    }
+  })
+  
+  interact('.drag-drop')
+  .draggable({
+    inertia: true,
+    restrict: {
+      restriction: 'parent',
+      endOnly: true,
+      elementRect: {top: 0, left: 0, bottom: 1, right: 1}
+    },
+    onmove: dragMoveListener,
+  })
+  
+  function onDraggingStart (event) {
+    event.stopPropagation()
+    
+    Array.from(document.getElementsByClassName('dropzone')).forEach((el) => { el.classList.add('drop-active') })
+    document.getElementById('decision-icon').classList.add('decision-icon-dragging')
+  }
+  
+  function onDraggingEnd (event, setId) {
+    event.stopPropagation()
+    
+    const elements = document.getElementsByClassName('drop-target')
+    
+    if (elements.length !== 1) {
+      return
+    }
+    
+    if (elements[0].id === 'decision-left') {
+      makeDecision(false, setId)
+    } else if (elements[0].id === 'decision-right') {
+      makeDecision(true, setId)
+    }
+  }
+</script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    console.log("Will the service worker register?");
+    navigator.serviceWorker.register('service-worker.js')
+    .then(function(reg){
+      console.log("Yes, it did.");
+    }).catch(function(err) {
+      console.log("No it didn't. This happened: ", err)
+    });
+  }
+</script>
+
+</body>
+</html>

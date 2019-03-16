@@ -1,0 +1,17 @@
+{
+  "short_name": "WordsApp!",
+  "name": "WordsApp!",
+  "start_url": "index.html",
+  "scope": "/wordsapp/",
+  "icons": [
+    {
+      "src": "icon.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    }
+  ],
+  "background_color": "#3f51b5",
+  "display": "standalone",
+  "theme_color": "#3f51b5",
+  "orientation": "portrait"
+}
